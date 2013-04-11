@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>channel-test</title>
+    <script type="text/javascript" language="javascript" src="guestbook/guestbook.nocache.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> 
+  <script type="text/javascript" src="/_ah/channel/jsapi"></script>
+
+  
+<script type='text/javascript'>
+
+	function sendNotification(id) {
+	  var Content = id;
+      $.post("http://ideejayworkspace.appspot.com/channel-test", { content : Content}, function(response){      });
+      return false;
+	
+	}
+
+
+  function generatePlaylistHTML(trackList){
+  	var html = '<div id="navcontainer"><ul id="navlist"><li id="active">'
+  	for(var i = 1; i<tracks.length; ++i) {
+  		html += '<li><input type="button" value="' + tracks[i] + '" id="' + tracks[i] + '"></li>'
+  	}
+  	html +="</ul></div>"
+  	return html
+  }
+  
+  function serveMsgFromServer(data) {
+    	if (data.data[0] == 'p') {
+    		tracks = data.data.split(";");
+    	} else {
+    		var track_up = data.data.split(";")[1]
+    		var indx = tracks.indexOf(track_up);
+    		if (indx != 1) {
+    			var tmp = tracks[indx-1]
+    			tracks[indx-1] = tracks[indx]
+    			tracks[indx] = tmp	
+    		}
+    	}
+    	 	var html = generatePlaylistHTML(tracks)
+    	$("#playlist").html(html)
+    	for(var i= 1; i<tracks.length; i++) {
+    		$("#"+tracks[i]).click(function() {
+    			sendNotification(this.id);
+    		});
+    	}
+    	
+    	};
+
+  function getToken() { // dostaje token i łączy się z odpowiednim channelem
+
+    path = "http://ideejayworkspace.appspot.com/guestbook";     
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', path, false);
+          xhr.send();
+          resp = xhr.responseText;
+          $("#token").html(resp);
+          channel = new goog.appengine.Channel(resp);
+    socket = channel.open();
+    socket.onopen = function() {};
+    socket.onmessage = serveMsgFromServer;
+    socket.onerror = function() {};
+    socket.onclose = function() {};
+  };  
+
+$(function() {
+	//buttony przypisane funkcje poniżej
+    $("#tokenButton").click(function() {
+        getToken();
+      }); 
+    }); 
+    
+    $(document).ready(function(){
+
+   $('#playlist_btn').click(function(){
+   	var Content = "dajPlayliste"
+      $.post("http://ideejayworkspace.appspot.com/channel-test", { content : Content}, function(response){
+		
+      });
+      return false;
+   });
+});
+
+</script>
+</head>
+<body>
+  <div id='token'> token </div>
+  <input type='button' id='tokenButton' value='Get token'>
+  <input type="button" value="sciągnij playliste" id="playlist_btn">
+  <br>
+  <p>najpierw pobierz token, później wciśnij pozycje by ją podbić do góry.
+  <br> zmiany wysyłane są do wszystkich klientów, którzy pobrali token </p>
+  <br>
+  <div id='playlist'> miejsce na playliste</div>
+</body>
+</html>
